@@ -1,0 +1,6 @@
+PyQt6
+pymupdf
+pypdf
+pillow
+pytesseract
+spacy
