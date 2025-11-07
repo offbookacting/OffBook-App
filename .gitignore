@@ -1,0 +1,19 @@
+# uv-specific files
+uv.lock
+.venv/
+venv/
+
+# Python-specific ignores
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Build artifacts
+dist/
+build/
+
+# IDE and OS files
+.vscode/
+.DS_Store

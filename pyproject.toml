@@ -1,0 +1,11 @@
+[project]
+name = "scenepartner"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pyqt6==6.10.0",
+    "pyqt6-qt6==6.10.0",
+    "pyqt6-sip==13.10.2",
+]
