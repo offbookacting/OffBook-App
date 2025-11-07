@@ -1,4 +1,6 @@
 # TODO: This module is fucked up lmao
+#  - Lazy loading optional dependencies? Why do we have optional dependencies?
+#  - Same typing errors as the rest of the project
 
 # core/pdf_parser.py
 from __future__ import annotations

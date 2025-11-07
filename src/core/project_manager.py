@@ -391,7 +391,7 @@ class ProjectManager:
     # Convenience proxies
 
     def create(self, name: str, pdf_path: str | Path, copy_into_library: bool = True,
-               initial_character: str | None = None, meta: dict[str, Any] | None = None) -> Project | None:
+        initial_character: str | None = None, meta: dict[str, Any] | None = None) -> Project:
         self.library = self._require_lib()
         return self.library.create_project(name, pdf_path, copy_into_library, None, initial_character, meta)
 
