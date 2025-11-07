@@ -2,13 +2,8 @@
 from __future__ import annotations
 import re
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
 
-try:
-    import spacy  # optional boost
-    _HAVE_SPACY = True
-except Exception:
-    _HAVE_SPACY = False
+import spacy  # optional boost
 
 @dataclass
 class DialogueBlock:
@@ -17,14 +12,14 @@ class DialogueBlock:
     raw_text: str
     start_line: int
     end_line: int
-    parentheticals: List[str] = field(default_factory=list)
+    parentheticals: list[str] = field(default_factory=list)
 
 @dataclass
 class ScriptParse:
-    characters: Dict[str, int]
-    blocks: List[DialogueBlock]
-    character_aliases: Dict[str, List[str]]
-    lines: List[str]
+    characters: dict[str, int]
+    blocks: list[DialogueBlock]
+    character_aliases: dict[str, list[str]]
+    lines: list[str]
 
 _SCENE_RE = re.compile(r'^(INT\.|EXT\.|INT/EXT\.|I/E\.|EST\.|INT\.? ?/ ?EXT\.?)\b')
 _TRANSITION_RE = re.compile(r'(FADE IN:|FADE OUT\.?|CUT TO:|DISSOLVE TO:|SMASH CUT TO:|MATCH CUT TO:|WIPE TO:)\s*$')
@@ -51,7 +46,7 @@ def _clean_name(name: str) -> str:
     if len(name.split()) > 5: return ""
     return name
 
-def _looks_like_name_line(line: str) -> Optional[str]:
+def _looks_like_name_line(line: str) -> str | None:
     s = line.strip()
     if not s or _is_scene_or_transition(s): return None
     m = _NAME_LINE_RE.match(s)
@@ -67,8 +62,8 @@ def _strip_parentheticals(text: str):
     stripped = '\n'.join(l.strip() for l in stripped.splitlines())
     return stripped.strip(), [p.strip() for p in parenths if p.strip()]
 
-def _merge_soft_wraps(lines: List[str]) -> List[str]:
-    merged: List[str] = []
+def _merge_soft_wraps(lines: list[str]) -> list[str]:
+    merged: list[str] = []
     i = 0
     while i < len(lines):
         cur = lines[i].rstrip()
@@ -92,25 +87,25 @@ def parse_script_text(full_text: str, use_spacy_person_boost: bool = True, spacy
     lines = _merge_soft_wraps(raw_lines)
 
     nlp = None
-    if use_spacy_person_boost and _HAVE_SPACY:
+    if use_spacy_person_boost:
         try:
             nlp = spacy.load(spacy_model, disable=["tagger","lemmatizer","textcat"])
         except Exception:
             nlp = None
 
-    name_at_idx: Dict[int, str] = {}
+    name_at_idx: dict[int, str] = {}
     for idx, line in enumerate(lines):
         cand = _looks_like_name_line(line)
         if cand: name_at_idx[idx] = cand
 
-    blocks: List[DialogueBlock] = []
+    blocks: list[DialogueBlock] = []
     i = 0
     while i < len(lines):
         if i in name_at_idx:
             speaker = name_at_idx[i]
             start = i + 1
             j = start
-            collected: List[str] = []
+            collected: list[str] = []
             while j < len(lines):
                 ln = lines[j]
                 if not ln.strip() or j in name_at_idx or _is_scene_or_transition(ln): break
@@ -130,12 +125,12 @@ def parse_script_text(full_text: str, use_spacy_person_boost: bool = True, spacy
         else:
             i += 1
 
-    freq: Dict[str, int] = {}
+    freq: dict[str, int] = {}
     for b in blocks: freq[b.speaker] = freq.get(b.speaker, 0) + 1
-    aliases: Dict[str, List[str]] = {k: [k] for k in freq.keys()}
+    aliases: dict[str, list[str]] = {k: [k] for k in freq.keys()}
 
     if nlp is not None and blocks:
-        seen_tokens: Dict[str, str] = {}
+        seen_tokens: dict[str, str] = {}
         for name in list(freq.keys()):
             for tok in name.split():
                 if len(tok) > 1 and tok.isupper():
@@ -152,12 +147,12 @@ def parse_script_text(full_text: str, use_spacy_person_boost: bool = True, spacy
 
     return ScriptParse(characters=freq, blocks=blocks, character_aliases=aliases, lines=lines)
 
-def list_characters(parse: ScriptParse, sort_by_freq: bool = True) -> List[str]:
+def list_characters(parse: ScriptParse, sort_by_freq: bool = True) -> list[str]:
     chars = list(parse.characters.keys())
     chars.sort(key=lambda c: parse.characters[c], reverse=True) if sort_by_freq else chars.sort()
     return chars
 
-def blocks_for_character(parse: ScriptParse, character: str) -> List[DialogueBlock]:
+def blocks_for_character(parse: ScriptParse, character: str) -> list[DialogueBlock]:
     canon = character.upper().strip()
     if canon in parse.characters:
         return [b for b in parse.blocks if b.speaker == canon]

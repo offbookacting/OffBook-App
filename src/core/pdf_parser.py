@@ -1,3 +1,5 @@
+# TODO: This module is fucked up lmao
+
 # core/pdf_parser.py
 from __future__ import annotations
 import io

@@ -8,4 +8,8 @@ dependencies = [
     "pyqt6==6.10.0",
     "pyqt6-qt6==6.10.0",
     "pyqt6-sip==13.10.2",
+    "spacy>=3.8.8",
 ]
+
+[tool.basedpyright]
+extraPaths = ["./src"]

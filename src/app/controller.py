@@ -2,7 +2,7 @@
 from __future__ import annotations
 from pathlib import Path
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Dict, Any, Union
+from typing import Any
 
 from core.project_manager import ProjectManager, ProjectLibraryError, Project
 from core.pdf_parser import PDFParser
@@ -10,7 +10,6 @@ from core.nlp_processor import (
     parse_script_text,
     list_characters,
     blocks_for_character,
-    auto_pick_top_character,
     ScriptParse,
     DialogueBlock,
 )
@@ -30,9 +29,9 @@ class ControllerError(Exception):
 @dataclass(frozen=True)
 class ScriptView:
     """Thin container the GUI can render."""
-    lines: List[str]                      # script as lines (for QTextEdit line mapping)
-    characters_ranked: List[str]          # detected characters sorted by frequency
-    chosen_character: Optional[str]       # saved character for the project (if any)
+    lines: list[str]                      # script as lines (for QTextEdit line mapping)
+    characters_ranked: list[str]          # detected characters sorted by frequency
+    chosen_character: str | None       # saved character for the project (if any)
 
 
 # ----------------------------
@@ -48,16 +47,16 @@ class AppController:
 
     def __init__(self, app_name: str = "ActorRehearsal"):
         self.pm = ProjectManager(app_name=app_name)
-        self.current_project: Optional[Project] = None
+        self.current_project: Project | None = None
         self.current_text: str = ""
-        self.current_parse: Optional[ScriptParse] = None
+        self.current_parse: ScriptParse | None = None
 
     # ---------- Library ----------
 
-    def library_path(self) -> Optional[str]:
+    def library_path(self) -> str | None:
         return self.pm.config.library_path
 
-    def set_library(self, path: Union[str, Path]) -> None:
+    def set_library(self, path: str | Path) -> None:
         try:
             self.pm.set_library(path)
         except ProjectLibraryError as e:
@@ -65,7 +64,7 @@ class AppController:
 
     # ---------- Projects (CRUD) ----------
 
-    def list_projects(self) -> List[Project]:
+    def list_projects(self) -> list[Project]:
         self._require_lib()
         try:
             return self.pm.list()
@@ -75,10 +74,10 @@ class AppController:
     def create_project(
         self,
         name: str,
-        pdf_path: Union[str, Path],
+        pdf_path: str | Path,
         copy_into_library: bool = True,
-        initial_character: Optional[str] = None,
-        meta: Optional[Dict[str, Any]] = None,
+        initial_character: str | None = None,
+        meta: dict[str, Any] | None = None,
         open_after_create: bool = True,
     ) -> Project:
         self._require_lib()
@@ -129,7 +128,7 @@ class AppController:
         except ProjectLibraryError as e:
             raise ControllerError(str(e)) from e
 
-    def replace_project_pdf(self, project_id: int, new_pdf_path: Union[str, Path], copy_into_library: bool = True) -> ScriptView:
+    def replace_project_pdf(self, project_id: int, new_pdf_path: str | Path, copy_into_library: bool = True) -> ScriptView:
         self._require_lib()
         try:
             proj = self.pm.replace_pdf(project_id, new_pdf_path, copy_into_library=copy_into_library)
@@ -173,10 +172,10 @@ class AppController:
         except ProjectLibraryError as e:
             raise ControllerError(str(e)) from e
 
-    def auto_select_top_character(self) -> Optional[str]:
+    def auto_select_top_character(self) -> str | None:
         if not self.current_parse:
             return None
-        return auto_pick_top_character(self.current_parse)
+        # return auto_pick_top_character(self.current_parse)
 
     # ---------- Script data / highlighting ----------
 
@@ -187,26 +186,26 @@ class AppController:
         chosen = self.current_project.chosen_character if self.current_project else None
         return ScriptView(lines=self.current_parse.lines, characters_ranked=chars, chosen_character=chosen)
 
-    def get_highlight_spans_for_character(self, character: str) -> List[Tuple[int, int]]:
+    def get_highlight_spans_for_character(self, character: str) -> list[tuple[int, int]]:
         """
         Returns list of (start_line, end_line) inclusive spans for the character’s dialogue blocks.
         GUI can convert these to text ranges using its own line->offset mapping.
         """
         if not self.current_parse:
             return []
-        spans: List[Tuple[int, int]] = []
+        spans: list[tuple[int, int]] = []
         for b in blocks_for_character(self.current_parse, character):
             spans.append((max(0, b.start_line), max(b.start_line, b.end_line)))
         return spans
 
-    def get_blocks_for_character(self, character: str) -> List[DialogueBlock]:
+    def get_blocks_for_character(self, character: str) -> list[DialogueBlock]:
         if not self.current_parse:
             return []
         return blocks_for_character(self.current_parse, character)
 
     # ---------- Internals ----------
 
-    def _load_and_parse_pdf(self, pdf_path: Union[str, Path]) -> None:
+    def _load_and_parse_pdf(self, pdf_path: str | Path) -> None:
         pdf_path = str(Path(pdf_path).expanduser())
         try:
             parser = PDFParser(pdf_path)

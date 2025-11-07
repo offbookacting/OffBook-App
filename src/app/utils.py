@@ -4,14 +4,14 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Iterable, Tuple, List
+from collections.abc import Iterable
 
 # Reuse core utilities where appropriate
 try:
-    from core.highlighter import compute_line_offsets, spans_to_ranges, HighlightSpan, TextRange  # noqa: F401
+    from core.highlighter import compute_line_offsets, spans_to_ranges  # noqa: F401
 except Exception:
     # Soft fallback stubs; real app will import from core.highlighter
-    def compute_line_offsets(lines: List[str]) -> List[int]:
+    def compute_line_offsets(lines: list[str]) -> list[int]:
         offs, cur = [], 0
         for ln in lines:
             offs.append(cur); cur += len(ln) + 1
@@ -96,9 +96,9 @@ def open_with_default_app(path: str | Path) -> None:
 # ---------- Text mapping utilities (thin wrappers around core.highlighter) ----------
 
 def map_line_spans_to_ranges(
-    lines: List[str],
-    spans: List[HighlightSpan],
-) -> Tuple[List[int], List[TextRange]]:
+    lines: list[str],
+    spans: list[HighlightSpan],
+) -> tuple[list[int], list[TextRange]]:
     """Compute line offsets and map spans to flat character ranges."""
     offsets = compute_line_offsets(lines)
     ranges = spans_to_ranges(spans, offsets, lines)

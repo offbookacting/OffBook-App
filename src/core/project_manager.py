@@ -7,7 +7,7 @@ import shutil
 import time
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import List, Optional, Dict, Any, Iterable, Tuple, Union, Callable
+from typing import Any, Callable
 
 # ----------------------------
 # Data models
@@ -18,10 +18,10 @@ class Project:
     id: int
     name: str
     pdf_path: str                 # absolute path to the script PDF
-    chosen_character: Optional[str]
+    chosen_character: str | None
     created_at: float             # epoch seconds
     updated_at: float             # epoch seconds
-    meta: Dict[str, Any]          # arbitrary JSON (e.g., cached parse hints)
+    meta: dict[str, Any]          # arbitrary JSON (e.g., cached parse hints)
 
 # ----------------------------
 # Paths and Config
@@ -37,7 +37,7 @@ class Config:
     def __init__(self, app_name: str = "ActorRehearsal"):
         self._app_dir = mac_app_support_dir(app_name)
         self._config_path = self._app_dir / "config.json"
-        self._data: Dict[str, Any] = {}
+        self._data: dict[str, Any] = {}
         self._load()
 
     def _load(self) -> None:
@@ -53,11 +53,11 @@ class Config:
         self._config_path.write_text(json.dumps(self._data, indent=2), encoding="utf-8")
 
     @property
-    def library_path(self) -> Optional[str]:
+    def library_path(self) -> str | None:
         return self._data.get("library_path")
 
     @library_path.setter
-    def library_path(self, p: Optional[str]) -> None:
+    def library_path(self, p: str | None) -> None:
         if p is None:
             self._data.pop("library_path", None)
         else:
@@ -86,7 +86,7 @@ class ProjectLibrary:
     DB_FILE = "projects.db"
     ATTACH_DIR = "attachments"
 
-    def __init__(self, root: Union[str, Path]):
+    def __init__(self, root: str | Path):
         self.root = Path(root).expanduser().resolve()
         if not self.root.exists():
             raise ProjectLibraryError(f"Library folder does not exist: {self.root}")
@@ -97,7 +97,7 @@ class ProjectLibrary:
         self._attach_dir = self._db_dir / self.ATTACH_DIR
         self._attach_dir.mkdir(parents=True, exist_ok=True)
         self._db_path = self._db_dir / self.DB_FILE
-        self._conn: Optional[sqlite3.Connection] = None
+        self._conn: sqlite3.Connection | None = None
         self._ensure_db()
 
     # ---------- DB core ----------
@@ -154,11 +154,11 @@ class ProjectLibrary:
     def create_project(
         self,
         name: str,
-        pdf_source_path: Union[str, Path],
+        pdf_source_path: str | Path,
         copy_into_library: bool = True,
-        project_subdir: Optional[str] = None,
-        initial_character: Optional[str] = None,
-        meta: Optional[Dict[str, Any]] = None,
+        project_subdir: str | None = None,
+        initial_character: str | None = None,
+        meta: dict[str, Any] | None = None,
     ) -> Project:
         """
         Register a new project. Optionally copy the PDF into <library>/<project_name>/script.pdf.
@@ -199,7 +199,7 @@ class ProjectLibrary:
 
         return self.get_project_by_name(name)
 
-    def list_projects(self) -> List[Project]:
+    def list_projects(self) -> list[Project]:
         rows = self._connect().execute(
             "SELECT * FROM projects ORDER BY updated_at DESC, name ASC"
         ).fetchall()
@@ -237,7 +237,7 @@ class ProjectLibrary:
             raise ProjectLibraryError(f"Project name already exists: {new_name}")
         return self.get_project(project_id)
 
-    def set_project_character(self, project_id: int, character: Optional[str]) -> Project:
+    def set_project_character(self, project_id: int, character: str | None) -> Project:
         now = self._now()
         self._connect().execute(
             "UPDATE projects SET chosen_character = ?, updated_at = ? WHERE id = ?",
@@ -247,7 +247,7 @@ class ProjectLibrary:
         return self.get_project(project_id)
 
     def update_pdf_path(
-        self, project_id: int, new_pdf_path: Union[str, Path], copy_into_library: bool = False
+        self, project_id: int, new_pdf_path: str | Path, copy_into_library: bool = False
     ) -> Project:
         new_pdf = Path(new_pdf_path).expanduser().resolve()
         if not new_pdf.exists():
@@ -271,7 +271,7 @@ class ProjectLibrary:
         self._connect().commit()
         return self.get_project(project_id)
 
-    def update_meta(self, project_id: int, updater: Callable[[Dict[str, Any]], Dict[str, Any]]) -> Project:
+    def update_meta(self, project_id: int, updater: Callable[[dict[str, Any]], dict[str, Any]]) -> Project:
         proj = self.get_project(project_id)
         new_meta = updater(dict(proj.meta) if proj.meta else {})
         now = self._now()
@@ -313,12 +313,12 @@ class ProjectLibrary:
         safe = f"{project.id}_{filename}"
         return (self._attach_dir / safe).resolve()
 
-    def scan_and_register_pdfs(self, subdirs: Optional[List[str]] = None) -> List[Project]:
+    def scan_and_register_pdfs(self, subdirs: list[str] | None = None) -> list[Project]:
         """
         Optional helper: scan library for PDFs not in DB and register them.
         Uses folder name as project name. Returns list of newly added.
         """
-        added: List[Project] = []
+        added: list[Project] = []
         roots = [self.root] if not subdirs else [self.root / s for s in subdirs]
         for r in roots:
             if not r.exists():
@@ -367,14 +367,14 @@ class ProjectManager:
     """
     def __init__(self, app_name: str = "ActorRehearsal"):
         self.config = Config(app_name=app_name)
-        self.library: Optional[ProjectLibrary] = None
+        self.library: ProjectLibrary | None = None
         if self.config.library_path:
             try:
                 self.set_library(self.config.library_path)
             except Exception:
                 self.library = None
 
-    def set_library(self, library_path: Union[str, Path]) -> None:
+    def set_library(self, library_path: str | Path) -> None:
         lib = ProjectLibrary(library_path)
         # swap-in
         if self.library:
@@ -390,47 +390,49 @@ class ProjectManager:
 
     # Convenience proxies
 
-    def create(self, name: str, pdf_path: Union[str, Path], copy_into_library: bool = True,
-               initial_character: Optional[str] = None, meta: Optional[Dict[str, Any]] = None) -> Project:
-        self._require_lib()
+    def create(self, name: str, pdf_path: str | Path, copy_into_library: bool = True,
+               initial_character: str | None = None, meta: dict[str, Any] | None = None) -> Project | None:
+        self.library = self._require_lib()
         return self.library.create_project(name, pdf_path, copy_into_library, None, initial_character, meta)
 
-    def list(self) -> List[Project]:
-        self._require_lib()
+    def list(self) -> list[Project]:
+        self.library = self._require_lib()
         return self.library.list_projects()
 
     def get(self, project_id: int) -> Project:
-        self._require_lib()
+        self.library = self._require_lib()
         return self.library.get_project(project_id)
 
     def get_by_name(self, name: str) -> Project:
-        self._require_lib()
+        self.library = self._require_lib()
         return self.library.get_project_by_name(name)
 
-    def set_character(self, project_id: int, character: Optional[str]) -> Project:
-        self._require_lib()
+    def set_character(self, project_id: int, character: str | None) -> Project:
+        self.library = self._require_lib()
         return self.library.set_project_character(project_id, character)
 
     def rename(self, project_id: int, new_name: str) -> Project:
-        self._require_lib()
+        self.library = self._require_lib()
         return self.library.rename_project(project_id, new_name)
 
-    def replace_pdf(self, project_id: int, new_pdf_path: Union[str, Path], copy_into_library: bool = False) -> Project:
-        self._require_lib()
+    def replace_pdf(self, project_id: int, new_pdf_path: str | Path, copy_into_library: bool = False) -> Project:
+        self.library = self._require_lib()
         return self.library.update_pdf_path(project_id, new_pdf_path, copy_into_library)
 
-    def update_meta(self, project_id: int, updater: Callable[[Dict[str, Any]], Dict[str, Any]]) -> Project:
-        self._require_lib()
+    def update_meta(self, project_id: int, updater: Callable[[dict[str, Any]], dict[str, Any]]) -> Project:
+        self.library = self._require_lib()
         return self.library.update_meta(project_id, updater)
 
     def delete(self, project_id: int, remove_folder: bool = False) -> None:
-        self._require_lib()
+        self.library = self._require_lib()
         self.library.delete_project(project_id, remove_folder)
 
-    def scan(self, subdirs: Optional[List[str]] = None) -> List[Project]:
-        self._require_lib()
+    def scan(self, subdirs: list[str] | None = None) -> list[Project]:
+        self.library = self._require_lib()
         return self.library.scan_and_register_pdfs(subdirs)
 
-    def _require_lib(self) -> None:
-        if not self.library:
+    def _require_lib(self) -> ProjectLibrary:
+        if isinstance(self.library, ProjectLibrary):
+            return self.library
+        else:
             raise ProjectLibraryError("No library set. Call set_library(<folder_path>) first.")

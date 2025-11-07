@@ -1,7 +1,6 @@
 # app/gui.py
 from __future__ import annotations
 import sys
-import os
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QSize
@@ -23,10 +22,10 @@ from core.nlp_processor import parse_script_text, list_characters, blocks_for_ch
 # ----------------------------
 
 def _err(parent: QWidget, msg: str) -> None:
-    QMessageBox.critical(parent, "Error", msg)
+    _ = QMessageBox.critical(parent, "Error", msg)
 
 def _info(parent: QWidget, msg: str) -> None:
-    QMessageBox.information(parent, "Info", msg)
+    _= QMessageBox.information(parent, "Info", msg)
 
 def _confirm(parent: QWidget, msg: str) -> bool:
     return QMessageBox.question(parent, "Confirm", msg) == QMessageBox.StandardButton.Yes
@@ -51,10 +50,10 @@ class MainWindow(QMainWindow):
         self.pm = ProjectManager(app_name="ActorRehearsal")
 
         # State
-        self.current_project: Optional[Project] = None
+        self.current_project: Project | None = None
         self.current_text: str = ""
-        self.current_parse: Optional[ScriptParse] = None
-        self.line_offsets: List[int] = []  # cumulative char offsets for each line
+        self.current_parse: ScriptParse | None = None
+        self.line_offsets: list[int] = []  # cumulative char offsets for each line
 
         # UI
         self._build_actions()
@@ -63,16 +62,18 @@ class MainWindow(QMainWindow):
         self.setStatusBar(QStatusBar(self))
 
         # Initial load
-        if self.pm.config.library_path:
-            self.statusBar().showMessage(f"Library: {self.pm.config.library_path}")
-            self._refresh_project_list()
-        else:
-            self.statusBar().showMessage("No library set. Choose Library to begin.")
+        statusbar = self.statusBar()
+        if isinstance(statusbar, QStatusBar):
+            if self.pm.config.library_path:
+                statusbar.showMessage(f"Library: {self.pm.config.library_path}")
+                self._refresh_project_list()
+            else:
+                statusbar.showMessage("No library set. Choose Library to begin.")
 
     # ---- UI builders ----
 
     def _build_actions(self) -> None:
-        self.act_choose_library = QAction("Choose Library…", self)
+        self.act_choose_library= QAction("Choose Library…", self)
         self.act_choose_library.triggered.connect(self.on_choose_library)
 
         self.act_new_project = QAction("New Project…", self)
@@ -167,7 +168,7 @@ class MainWindow(QMainWindow):
         except ProjectLibraryError as e:
             _err(self, str(e))
 
-    def _current_selected_project_id(self) -> Optional[int]:
+    def _current_selected_project_id(self) -> int | None:
         item = self.list_projects.currentItem()
         if not item:
             return None
@@ -206,7 +207,7 @@ class MainWindow(QMainWindow):
             self.cmb_char.setCurrentText(proj.chosen_character)
         self.cmb_char.blockSignals(False)
 
-    def _set_script_text(self, lines: List[str]) -> None:
+    def _set_script_text(self, lines: list[str]) -> None:
         # Build offsets per line for highlighting by line-span
         self.line_offsets = []
         buf = []
@@ -236,9 +237,11 @@ class MainWindow(QMainWindow):
         fmt.setFontWeight(600)
 
         blocks = blocks_for_character(self.current_parse, character)
-        if not blocks:
-            self.statusBar().showMessage(f"No blocks found for {character}", 5000)
-            return
+        statusbar = self.statusBar()
+        if isinstance(statusbar, QStatusBar):
+            if not blocks:
+                statusbar.showMessage(f"No blocks found for {character}", 5000)
+                return
 
         doc = self.txt_script.document()
         cursor = self.txt_script.textCursor()
@@ -256,7 +259,9 @@ class MainWindow(QMainWindow):
             cursor.setPosition(end_pos, cursor.MoveMode.KeepAnchor)
             cursor.mergeCharFormat(fmt)
         cursor.endEditBlock()
-        self.statusBar().showMessage(f"Highlighted lines for {character}", 3000)
+        statusbar = self.statusBar()
+        if isinstance(statusbar, QStatusBar):
+            statusbar.showMessage(f"Highlighted lines for {character}", 3000)
 
     # ---- Slots ----
 
@@ -266,7 +271,9 @@ class MainWindow(QMainWindow):
             return
         try:
             self.pm.set_library(path)
-            self.statusBar().showMessage(f"Library: {path}")
+            statusbar = self.statusBar()
+            if isinstance(statusbar, QStatusBar):
+                statusbar.showMessage(f"Library: {path}")
             self._refresh_project_list()
         except ProjectLibraryError as e:
             _err(self, str(e))
@@ -290,9 +297,11 @@ class MainWindow(QMainWindow):
         self._refresh_project_list()
         # Select and open it
         for i in range(self.list_projects.count()):
-            if self.list_projects.item(i).text() == proj.name:
-                self.list_projects.setCurrentRow(i)
-                break
+            item = self.list_projects.item(i)
+            if isinstance(item, QListWidgetItem):
+                if item.text() == proj.name:
+                    self.list_projects.setCurrentRow(i)
+                    break
         self._load_project(proj)
 
     def on_open_selected(self) -> None:
@@ -336,7 +345,9 @@ class MainWindow(QMainWindow):
         try:
             proj = self.pm.rename(pid, Path(new_name).name)
             self._refresh_project_list()
-            self.statusBar().showMessage(f"Renamed to {proj.name}", 3000)
+            statusbar = self.statusBar()
+            if isinstance(statusbar, QStatusBar):
+                statusbar.showMessage(f"Renamed to {proj.name}", 3000)
         except ProjectLibraryError as e:
             _err(self, str(e))
 
@@ -350,7 +361,9 @@ class MainWindow(QMainWindow):
         try:
             proj = self.pm.replace_pdf(self.current_project.id, pdf_path, copy_into_library=True)
             self._load_project(proj)
-            self.statusBar().showMessage("Script PDF replaced.", 3000)
+            statusbar = self.statusBar()
+            if isinstance(statusbar, QStatusBar):
+                statusbar.showMessage("Script PDF replaced.", 3000)
         except ProjectLibraryError as e:
             _err(self, str(e))
 
@@ -372,7 +385,9 @@ class MainWindow(QMainWindow):
             proj = self.pm.set_character(self.current_project.id, name)
             self.current_project = proj
             self._highlight_character(name)
-            self.statusBar().showMessage(f"Character saved: {name}", 3000)
+            statusbar = self.statusBar()
+            if isinstance(statusbar, QStatusBar):
+                statusbar.showMessage(f"Character saved: {name}", 3000)
         except ProjectLibraryError as e:
             _err(self, str(e))
 

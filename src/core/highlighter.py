@@ -1,18 +1,12 @@
 # core/highlighter.py
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List, Tuple, Optional
 
 # We depend on the parsing structures to know where dialogue lives.
 from core.nlp_processor import ScriptParse, blocks_for_character
 
-# PyQt is optional. We keep Qt-specific helpers guarded.
-try:
-    from PyQt6.QtGui import QTextCharFormat, QColor
-    from PyQt6.QtWidgets import QTextEdit
-    _HAVE_QT = True
-except Exception:
-    _HAVE_QT = False
+from PyQt6.QtGui import QTextCharFormat, QColor
+from PyQt6.QtWidgets import QTextEdit
 
 
 # ----------------------------
@@ -37,12 +31,12 @@ class TextRange:
 # Core computation (widget-agnostic)
 # ----------------------------
 
-def compute_line_offsets(lines: List[str]) -> List[int]:
+def compute_line_offsets(lines: list[str]) -> list[int]:
     """
     Returns cumulative character offsets for each line’s start,
     assuming the final text is '\n'.join(lines).
     """
-    offsets: List[int] = []
+    offsets: list[int] = []
     cur = 0
     for ln in lines:
         offsets.append(cur)
@@ -50,11 +44,11 @@ def compute_line_offsets(lines: List[str]) -> List[int]:
     return offsets
 
 
-def get_highlight_spans(parse: ScriptParse, character: str) -> List[HighlightSpan]:
+def get_highlight_spans(parse: ScriptParse, character: str) -> list[HighlightSpan]:
     """
     Convert DialogueBlocks for a character into inclusive line spans.
     """
-    spans: List[HighlightSpan] = []
+    spans: list[HighlightSpan] = []
     for b in blocks_for_character(parse, character):
         s = max(0, b.start_line)
         e = max(s, b.end_line)
@@ -63,14 +57,14 @@ def get_highlight_spans(parse: ScriptParse, character: str) -> List[HighlightSpa
     return merge_spans(spans)
 
 
-def merge_spans(spans: List[HighlightSpan]) -> List[HighlightSpan]:
+def merge_spans(spans: list[HighlightSpan]) -> list[HighlightSpan]:
     """
     Merge overlapping or immediately-adjacent line spans.
     """
     if not spans:
         return []
     spans_sorted = sorted(spans, key=lambda sp: (sp.start_line, sp.end_line))
-    merged: List[HighlightSpan] = [spans_sorted[0]]
+    merged: list[HighlightSpan] = [spans_sorted[0]]
     for sp in spans_sorted[1:]:
         last = merged[-1]
         if sp.start_line <= last.end_line + 1:
@@ -85,14 +79,14 @@ def merge_spans(spans: List[HighlightSpan]) -> List[HighlightSpan]:
 
 
 def spans_to_ranges(
-    spans: List[HighlightSpan],
-    line_offsets: List[int],
-    lines: List[str],
-) -> List[TextRange]:
+    spans: list[HighlightSpan],
+    line_offsets: list[int],
+    lines: list[str],
+) -> list[TextRange]:
     """
     Map line spans to concrete flat character ranges for '\n'.join(lines).
     """
-    ranges: List[TextRange] = []
+    ranges: list[TextRange] = []
     n = len(lines)
     total_len = sum(len(l) for l in lines) + max(0, n - 1)
     for sp in spans:
@@ -110,7 +104,7 @@ def spans_to_ranges(
     return ranges
 
 
-def ranges_for_character(parse: ScriptParse, character: str, lines: List[str]) -> Tuple[List[int], List[TextRange]]:
+def ranges_for_character(parse: ScriptParse, character: str, lines: list[str]) -> tuple[list[int], list[TextRange]]:
     """
     Convenience: compute line_offsets and ranges in one call.
     Returns (line_offsets, ranges).
@@ -127,17 +121,10 @@ def ranges_for_character(parse: ScriptParse, character: str, lines: List[str]) -
 
 def qt_apply_highlights(
     editor: "QTextEdit",
-    ranges: List[TextRange],
+    ranges: list[TextRange],
     background: str = "#FFF59D",
     font_weight: int = 600,
 ) -> None:
-    """
-    Apply character-format highlights to a QTextEdit for given ranges.
-    Safe no-op if PyQt6 isn't present.
-    """
-    if not _HAVE_QT or editor is None:
-        return
-
     # Clear existing formats in-document
     cur = editor.textCursor()
     cur.beginEditBlock()
@@ -164,8 +151,6 @@ def qt_clear_highlights(editor: "QTextEdit") -> None:
     """
     Remove all custom formatting in the QTextEdit.
     """
-    if not _HAVE_QT or editor is None:
-        return
     cur = editor.textCursor()
     cur.beginEditBlock()
     cur.select(cur.SelectionType.Document)
@@ -177,7 +162,7 @@ def qt_clear_highlights(editor: "QTextEdit") -> None:
 # Non-GUI preview utility
 # ----------------------------
 
-def decorate_text_preview(text: str, ranges: List[TextRange],
+def decorate_text_preview(text: str, ranges: list[TextRange],
                           open_tag: str = "[[", close_tag: str = "]]") -> str:
     """
     Returns a plain-text preview with markers around highlighted ranges.

@@ -2,7 +2,7 @@
 from __future__ import annotations
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 # Reuse the same app-support location as core.project_manager
 try:
@@ -25,7 +25,7 @@ class AppConfig:
     def __init__(self, app_name: str = "ActorRehearsal"):
         self._dir = mac_app_support_dir(app_name)
         self._path = self._dir / "ui_config.json"
-        self._data: Dict[str, Any] = {}
+        self._data: dict[str, Any] = {}
         self._load()
 
     # ---------- I/O ----------
@@ -45,7 +45,7 @@ class AppConfig:
         tmp.write_text(json.dumps(self._data, indent=2), encoding="utf-8")
         tmp.replace(self._path)
 
-    def _defaults(self) -> Dict[str, Any]:
+    def _defaults(self) -> dict[str, Any]:
         return {
             "window": {"width": 1200, "height": 800, "maximized": False},
             "editor": {
@@ -60,7 +60,7 @@ class AppConfig:
 
     # ---------- Window ----------
 
-    def window_geometry(self) -> dict:
+    def window_geometry(self) -> dict[Any, Any]:
         return dict(self._data.get("window", {}))
 
     def set_window_geometry(self, width: int, height: int, maximized: bool) -> None:
@@ -70,10 +70,10 @@ class AppConfig:
 
     # ---------- Editor ----------
 
-    def editor_prefs(self) -> dict:
+    def editor_prefs(self) -> dict[Any, Any]:
         return dict(self._data.get("editor", {}))
 
-    def set_editor_prefs(self, font_family: Optional[str] = None, font_size: Optional[int] = None, wrap: Optional[bool] = None) -> None:
+    def set_editor_prefs(self, font_family: str | None = None, font_size: int | None = None, wrap: bool | None = None) -> None:
         ed = self._data.setdefault("editor", {})
         if font_family is not None:
             ed["font_family"] = str(font_family)
@@ -85,10 +85,10 @@ class AppConfig:
 
     # ---------- Highlight ----------
 
-    def highlight_style(self) -> dict:
+    def highlight_style(self) -> dict[Any, Any]:
         return dict(self._data.get("highlight", {}))
 
-    def set_highlight_style(self, color: Optional[str] = None, weight: Optional[int] = None) -> None:
+    def set_highlight_style(self, color: str | None = None, weight: int | None = None) -> None:
         hl = self._data.setdefault("highlight", {})
         if color is not None:
             hl["color"] = str(color)
