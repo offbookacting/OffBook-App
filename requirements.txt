@@ -1,0 +1,21 @@
+# Scene Partner Requirements
+# Python 3.9-3.13 required (Python 3.14 not yet supported due to missing dependencies)
+
+PyQt6==6.10.0
+PyQt6-Qt6==6.10.0
+PyQt6-WebEngine==6.10.0
+PyQt6_sip==13.10.2
+PyMuPDF==1.24.0
+pypdf==4.0.1
+Pillow==10.4.0
+easyocr
+spacy==3.7.5
+piper-tts==1.2.0
+requests==2.31.0
+numpy
+send2trash>=1.8.2
+
+# Note: piper-tts requires onnxruntime and piper-phonemize
+# These are automatically installed as dependencies of piper-tts
+# However, they are not yet available for Python 3.14
+# If you're using Python 3.14, please use Python 3.13 or earlier instead
