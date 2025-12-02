@@ -9,6 +9,7 @@ import urllib.parse
 import shutil
 import subprocess
 import sys
+from app.utils import reveal_in_finder
 
 from PyQt6.QtCore import Qt, QEvent
 from PyQt6.QtWidgets import (
@@ -499,12 +500,7 @@ class AddLinkDialog(QDialog):
             return
         
         try:
-            if sys.platform.startswith("darwin"):
-                subprocess.run(["open", "-R", str(resource_path)], check=False)
-            elif sys.platform.startswith("win"):
-                subprocess.run(["explorer", "/select,", str(resource_path)], check=False)
-            else:
-                subprocess.run(["xdg-open", str(resource_path.parent)], check=False)
+            reveal_in_finder(resource_path)
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to show file location:\n{e}")
     

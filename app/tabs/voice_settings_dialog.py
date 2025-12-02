@@ -22,6 +22,7 @@ import platform
 from app.tabs.voice_selection_dialog import VoiceConfig, VoicePresets, create_piper_onnx_json
 from app.tabs.voice_download_dialog import VoiceDownloadDialog
 from app.config import AppConfig
+from app.utils import open_with_default_app
 
 
 class VoiceSettingsDialog(QDialog):
@@ -868,12 +869,7 @@ class VoiceSettingsDialog(QDialog):
             return
         
         try:
-            if platform.system() == "Darwin":  # macOS
-                subprocess.run(["open", str(self.library_presets_dir)])
-            elif platform.system() == "Windows":
-                subprocess.run(["explorer", str(self.library_presets_dir)])
-            else:  # Linux
-                subprocess.run(["xdg-open", str(self.library_presets_dir)])
+            open_with_default_app(self.library_presets_dir)
         except Exception as e:
             QMessageBox.warning(
                 self,

@@ -9,8 +9,18 @@ try:
     from core.project_manager import mac_app_support_dir
 except Exception:
     # Fallback if imported early in bootstrap
+    import os
+    import platform
     def mac_app_support_dir(app_name: str = "ActorRehearsal") -> Path:
-        base = Path.home() / "Library" / "Application Support" / app_name
+        """Cross-platform app support directory fallback."""
+        system = platform.system()
+        if system == "Darwin":  # macOS
+            base = Path.home() / "Library" / "Application Support" / app_name
+        elif system == "Windows":  # Windows
+            appdata = os.getenv("APPDATA", Path.home() / "AppData" / "Roaming")
+            base = Path(appdata) / app_name
+        else:  # Linux and other Unix-like systems
+            base = Path.home() / ".config" / app_name
         base.mkdir(parents=True, exist_ok=True)
         return base
 

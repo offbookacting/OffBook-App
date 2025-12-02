@@ -5,6 +5,8 @@ import sqlite3
 import json
 import shutil
 import time
+import sys
+import platform
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import List, Optional, Dict, Any, Iterable, Tuple, Union, Callable, Set
@@ -28,7 +30,21 @@ class Project:
 # ----------------------------
 
 def mac_app_support_dir(app_name: str = "ActorRehearsal") -> Path:
-    base = Path.home() / "Library" / "Application Support" / app_name
+    """
+    Get the application support directory for the current platform.
+    - macOS: ~/Library/Application Support/<app_name>
+    - Windows: %APPDATA%/<app_name>
+    - Linux: ~/.config/<app_name>
+    """
+    system = platform.system()
+    if system == "Darwin":  # macOS
+        base = Path.home() / "Library" / "Application Support" / app_name
+    elif system == "Windows":  # Windows
+        appdata = os.getenv("APPDATA", Path.home() / "AppData" / "Roaming")
+        base = Path(appdata) / app_name
+    else:  # Linux and other Unix-like systems
+        base = Path.home() / ".config" / app_name
+    
     base.mkdir(parents=True, exist_ok=True)
     return base
 

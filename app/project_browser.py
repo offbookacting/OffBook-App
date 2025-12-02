@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
 )
 
 from core.project_manager import ProjectManager, ProjectLibraryError, Project, ProjectLibrary
+from app.utils import reveal_in_finder
 
 
 class ProjectBrowser(QWidget):
@@ -695,18 +696,7 @@ class ProjectBrowser(QWidget):
                 return
 
         try:
-            if sys.platform == "darwin":
-                if target.is_file():
-                    subprocess.run(["open", "-R", str(target)], check=False)
-                else:
-                    subprocess.run(["open", str(target)], check=False)
-            elif sys.platform.startswith("win"):
-                os.startfile(str(target if target.is_dir() else target.parent))
-            else:
-                subprocess.run(
-                    ["xdg-open", str(target if target.is_dir() else target.parent)],
-                    check=False,
-                )
+            reveal_in_finder(target)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not open location:\n{e}")
     

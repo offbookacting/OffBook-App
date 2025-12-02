@@ -3,6 +3,9 @@ from __future__ import annotations
 import re
 import shutil
 import subprocess
+import sys
+import platform
+import os
 from pathlib import Path
 from typing import Iterable, Tuple, List
 
@@ -75,21 +78,52 @@ def unique_name(preferred: str, existing: Iterable[str]) -> str:
         preferred = f"{base}_{n}"
     return preferred
 
-# ---------- macOS helpers ----------
+# ---------- Cross-platform file system helpers ----------
 
 def reveal_in_finder(path: str | Path) -> None:
-    """Reveal a file or folder in Finder."""
-    p = str(Path(path).expanduser())
+    """Reveal a file or folder in the system file manager (Finder/Explorer/Nautilus)."""
+    p = Path(path).expanduser().resolve()
+    system = platform.system()
+    
     try:
-        subprocess.run(["open", "-R", p], check=False)
+        if system == "Darwin":  # macOS
+            subprocess.run(["open", "-R", str(p)], check=False)
+        elif system == "Windows":  # Windows
+            # On Windows, use explorer with /select to highlight the file
+            if p.is_file():
+                # Select the specific file in Explorer
+                subprocess.run(["explorer", "/select,", str(p)], check=False)
+            else:
+                # Open the folder
+                os.startfile(str(p), "explore")
+        else:  # Linux and other Unix-like systems
+            # Try common file managers
+            file_path = str(p.parent if p.is_file() else p)
+            managers = ["nautilus", "dolphin", "thunar", "pcmanfm", "nemo"]
+            for manager in managers:
+                try:
+                    subprocess.run([manager, file_path], check=False, timeout=2)
+                    break
+                except (subprocess.TimeoutExpired, FileNotFoundError):
+                    continue
+            else:
+                # Fallback to xdg-open
+                subprocess.run(["xdg-open", file_path], check=False)
     except Exception:
         pass
 
 def open_with_default_app(path: str | Path) -> None:
-    """Open with the default registered app (macOS)."""
+    """Open with the default registered app (cross-platform)."""
     p = str(Path(path).expanduser())
+    system = platform.system()
+    
     try:
-        subprocess.run(["open", p], check=False)
+        if system == "Darwin":  # macOS
+            subprocess.run(["open", p], check=False)
+        elif system == "Windows":  # Windows
+            os.startfile(p)
+        else:  # Linux and other Unix-like systems
+            subprocess.run(["xdg-open", p], check=False)
     except Exception:
         pass
 
