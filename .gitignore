@@ -29,6 +29,8 @@ __pycache__/
 *.DS_Store
 .DS_Store
 Icon?
+Icon
+**/Icon
 Thumbs.db
 .AppleDouble
 .LSOverride

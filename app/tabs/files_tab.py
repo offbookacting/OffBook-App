@@ -661,8 +661,8 @@ class FilesTab(QWidget):
         all_items = []
         try:
             for item in files_dir.iterdir():
-                # Skip hidden files and excluded items
-                excluded_names = {'.ds_store', 'icon\r', 'icon', '.custom_icons.json', 'file_order.json', '.file_order.json'}
+                # Skip hidden files and excluded items (including macOS Icon files)
+                excluded_names = {'.ds_store', 'icon\r', 'icon\n', 'icon', '.custom_icons.json', 'file_order.json', '.file_order.json'}
                 if item.name.startswith('.') or item.name.lower() in excluded_names:
                     continue
                 # Skip .json files (never show them in files tab)

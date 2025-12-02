@@ -633,7 +633,7 @@ class ProjectLibrary:
         
         # Folders to exclude (metadata, system folders, etc.) - case-insensitive
         EXCLUDED_NAMES = {
-            'file_structure', 'icon', 'icon\r', '.ds_store', 'thumbs.db',
+            'file_structure', 'icon', 'icon\r', 'icon\n', '.ds_store', 'thumbs.db',
             'desktop.ini', '.gitignore', '.gitkeep', 'customizations', '.rehearsal',
             'male_student_sides_lbr'  # Add this specific one
         }

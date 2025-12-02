@@ -337,6 +337,9 @@ class ProjectBrowser(QWidget):
             # If no common name found, search for any valid file
             if not script_file:
                 for file_path in folder_path.iterdir():
+                    # Skip macOS Icon files and hidden files
+                    if file_path.name.lower() in {'icon', 'icon\r', 'icon\n'} or file_path.name.startswith('.'):
+                        continue
                     if file_path.is_file() and file_path.suffix.lower() in valid_extensions:
                         script_file = file_path
                         break
