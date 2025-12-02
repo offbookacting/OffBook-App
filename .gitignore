@@ -1,7 +1,88 @@
-venv
-.venv
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Build artifacts
 build/
 dist/
+*.egg-info/
+*.egg
+*.whl
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
 *.DS_Store
-Icon?
 .DS_Store
+Icon?
+Thumbs.db
+.AppleDouble
+.LSOverride
+._*
+
+# Windows specific
+*.lnk
+Desktop.ini
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment variables
+.env
+.env.local
+
+# Large data files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Large model files (ML/AI models)
+*.onnx
+*.pth
+*.pt
+*.h5
+*.pb
+*.ckpt
+*.safetensors
+
+# Media files (if not needed in repo)
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.mp3
+*.wav
+*.flac
+*.ogg
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
